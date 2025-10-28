@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
 // --- Path setup (for ES modules) ---
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Load environment variables
+dotenv.config();
 
 // --- Initialize database ---
 let db;
@@ -131,5 +135,5 @@ app.get("*", (req, res) => {
 });
 
 // --- Start Server ---
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT ||  10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
