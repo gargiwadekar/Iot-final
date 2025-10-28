@@ -1,0 +1,25 @@
+:root{ --primary:#4955B7 }
+*{ box-sizing:border-box; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial }
+body{ margin:0; color:#111 }
+
+.auth-bg{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); padding-top:48px }
+.auth-title{ color:#fff; font-size:36px; font-weight:700; margin:0 0 6px }
+.auth-sub{ color:#e5ecff; margin:0 0 18px }
+.card{ width:420px; max-width:92vw; background:#fff; padding:22px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.15) }
+.card input{ width:100%; padding:12px 14px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:14px; outline:none }
+.card .primary{ width:100%; background:var(--primary); color:#fff; border:none; padding:12px; border-radius:6px; font-weight:600; cursor:pointer }
+.card .muted{ text-align:center; margin-top:10px; color:#555 }
+
+.layout{ display:flex; min-height:100vh; background:#f6f7fb }
+.sidebar{ width:200px; background:#3F4DB3; color:#fff; padding:18px; display:flex; flex-direction:column; gap:16px }
+.side-btn{ background:#fff; color:#3F4DB3; border:none; padding:10px 12px; border-radius:6px; font-weight:600; cursor:pointer }
+.main{ flex:1; padding:22px }
+.page-title{ font-size:24px; margin:8px 0 14px }
+input, textarea{ width:100%; padding:12px 14px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:12px; outline:none }
+.row{ display:grid; grid-template-columns: 1fr 1fr; gap:18px }
+.primary{ background:var(--primary); color:#fff; border:none; padding:12px; border-radius:6px; font-weight:700; cursor:pointer }
+.notice-card{ background:#fff; border-radius:10px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:16px }
+.n-title{ font-weight:700; margin-bottom:6px }
+.n-desc{ color:#333; margin-bottom:8px }
+.n-date{ color:#666; font-size:12px; margin-bottom:10px }
