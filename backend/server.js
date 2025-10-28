@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import Database from "better-sqlite3";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -12,37 +13,46 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+let db;
+
 // ---------- SQLite Database Setup ----------
-const db = new Database(path.join(__dirname, "database.db"));
+async function initDB() {
+  db = await open({
+    filename: path.join(__dirname, "database.db"),
+    driver: sqlite3.Database,
+  });
 
-// Create table if it doesn't exist
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS notices (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    message TEXT,
-    date TEXT
-  )
-`).run();
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS notices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      message TEXT,
+      date TEXT
+    )
+  `);
 
-console.log("✅ Database connected and table ready.");
+  console.log("✅ Database connected and table ready.");
+}
+initDB();
 
 // ---------- API Routes ----------
-app.get("/api/notices", (req, res) => {
-  const notices = db.prepare("SELECT * FROM notices ORDER BY id DESC").all();
+app.get("/api/notices", async (req, res) => {
+  const notices = await db.all("SELECT * FROM notices ORDER BY id DESC");
   res.json(notices);
 });
 
-app.post("/api/notices", (req, res) => {
+app.post("/api/notices", async (req, res) => {
   const { title, message, date } = req.body;
-  db.prepare("INSERT INTO notices (title, message, date) VALUES (?, ?, ?)")
-    .run(title, message, date);
+  await db.run("INSERT INTO notices (title, message, date) VALUES (?, ?, ?)", [
+    title,
+    message,
+    date,
+  ]);
   res.json({ message: "✅ Notice added successfully" });
 });
 
 // ---------- Serve Frontend (React Build) ----------
 const frontendPath = path.join(__dirname, "../frontend/dist");
-
 app.use(express.static(frontendPath));
 
 app.get("*", (req, res) => {
