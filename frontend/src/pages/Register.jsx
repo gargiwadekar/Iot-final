@@ -41,8 +41,8 @@ export default function Register() {
     if (!validate()) return
 
     try {
-      // ✅ Added 'await' to ensure request completes before continuing
-      await api.post('/api/register', form)
+      // ✅ Base URL is '/api', so call relative path only
+      await api.post('/register', form)
       setToast({ message: 'Registered successfully. Please login.', type: 'success' })
 
       // ✅ Added small delay before redirect

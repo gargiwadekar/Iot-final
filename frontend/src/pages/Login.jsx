@@ -28,8 +28,8 @@ export default function Login() {
     e.preventDefault()
     if (!validate()) return
     try {
-      // ✅ Corrected API endpoint
-      const { data } = await api.post('/api/login', form)
+      // ✅ Base URL is '/api', so call relative path only
+      const { data } = await api.post('/login', form)
       localStorage.setItem('token', data.token)
       nav('/dashboard')
     } catch (err) {

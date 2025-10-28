@@ -23,7 +23,7 @@ dotenv.config();
 let db;
 async function initDB() {
   db = await open({
-    filename: path.join(__dirname, "database.db"),
+    filename: process.env.DB_PATH || path.join(__dirname, "database.db"),
     driver: sqlite3.Database,
   });
 
@@ -51,16 +51,20 @@ async function initDB() {
 initDB();
 
 // --- AUTH ROUTES ---
+app.get('/api/health', (req, res) => res.json({ ok: true }))
+app.get('/api/healthz', (req, res) => res.type('text').send('OK'))
+
 app.post("/api/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, username, email, password } = req.body;
+    const finalName = (name||"").trim() || (username||"").trim();
 
-    if (!name || !email || !password)
+    if (!finalName || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
 
     const hashed = await bcrypt.hash(password, 10);
     await db.run("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", [
-      name,
+      finalName,
       email,
       hashed,
     ]);
@@ -130,7 +134,7 @@ app.post("/api/notices", async (req, res) => {
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-app.get("*", (req, res) => {
+app.get(/^\/(?!api)(.*)/, (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
