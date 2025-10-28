@@ -8,18 +8,16 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-// --- Path setup (for ES modules) ---
+// --- Setup (for ES modules) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Load environment variables
-dotenv.config();
-
-// --- Initialize database ---
+// --- Initialize SQLite database ---
 let db;
 async function initDB() {
   db = await open({
@@ -51,13 +49,13 @@ async function initDB() {
 initDB();
 
 // --- AUTH ROUTES ---
-app.get('/api/health', (req, res) => res.json({ ok: true }))
-app.get('/api/healthz', (req, res) => res.type('text').send('OK'))
+app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/healthz", (req, res) => res.type("text").send("OK"));
 
 app.post("/api/register", async (req, res) => {
   try {
     const { name, username, email, password } = req.body;
-    const finalName = (name||"").trim() || (username||"").trim();
+    const finalName = (name || "").trim() || (username || "").trim();
 
     if (!finalName || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
@@ -71,9 +69,9 @@ app.post("/api/register", async (req, res) => {
 
     res.json({ message: "✅ Registered successfully" });
   } catch (err) {
-    if (err.message.includes("UNIQUE"))
+    if (err.message.includes("UNIQUE")) {
       res.status(400).json({ message: "Email already registered" });
-    else {
+    } else {
       console.error("Register error:", err);
       res.status(500).json({ message: "Server error" });
     }
@@ -92,7 +90,9 @@ app.post("/api/login", async (req, res) => {
     if (!valid)
       return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || "secret", { expiresIn: "1d" });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || "secret", {
+      expiresIn: "1d",
+    });
 
     res.json({ message: "✅ Login successful", token });
   } catch (err) {
@@ -134,10 +134,11 @@ app.post("/api/notices", async (req, res) => {
 const frontendPath = path.resolve(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-app.get(/^\/(?!api)(.*)/, (req, res) => {
+// ✅ Fix route handling (for React Router)
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // --- Start Server ---
-const PORT = process.env.PORT ||  10000;
+const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
