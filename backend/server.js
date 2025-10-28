@@ -131,7 +131,7 @@ app.post("/api/notices", async (req, res) => {
 });
 
 // --- Serve Frontend (React build) ---
-const frontendPath = path.join(__dirname, "../frontend/dist");
+const frontendPath = path.resolve(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
 app.get(/^\/(?!api)(.*)/, (req, res) => {

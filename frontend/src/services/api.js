@@ -1,14 +1,14 @@
-import axios from 'axios'
+import axios from "axios";
 
+// ✅ For Render combined deployment
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4001/api'
-})
-
+  baseURL: "/api"
+});
 
 api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
-  return cfg
-})
+  const token = localStorage.getItem("token");
+  if (token) cfg.headers.Authorization = `Bearer ${token}`;
+  return cfg;
+});
 
-export default api
+export default api;
