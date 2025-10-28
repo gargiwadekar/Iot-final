@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://your-backend-name.onrender.com/api'   // 🔹 change this
+  baseURL: 'https://iot-final-hesq.onrender.com/api'   
 })
 
 api.interceptors.request.use(cfg => {
