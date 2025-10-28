@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import User from "./models/User.js";
+import Notice from "./models/Notice.js";
 
 // --- Setup (for ES modules) ---
 const __filename = fileURLToPath(import.meta.url);
@@ -17,36 +18,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- Initialize SQLite database ---
-let db;
-async function initDB() {
-  db = await open({
-    filename: process.env.DB_PATH || path.join(__dirname, "database.db"),
-    driver: sqlite3.Database,
-  });
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      email TEXT UNIQUE,
-      password TEXT
-    )
-  `);
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS notices (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT,
-      message TEXT,
-      date TEXT,
-      userId INTEGER
-    )
-  `);
-
-  console.log("✅ Database ready (users + notices).");
-}
-initDB();
+// --- Connect MongoDB ---
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // --- AUTH ROUTES ---
 app.get("/api/health", (req, res) => res.json({ ok: true }));
@@ -60,28 +36,24 @@ app.post("/api/register", async (req, res) => {
     if (!finalName || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
 
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ message: "Email already registered" });
+
     const hashed = await bcrypt.hash(password, 10);
-    await db.run("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", [
-      finalName,
-      email,
-      hashed,
-    ]);
+    await User.create({ name: finalName, email, password: hashed });
 
     res.json({ message: "✅ Registered successfully" });
   } catch (err) {
-    if (err.message.includes("UNIQUE")) {
-      res.status(400).json({ message: "Email already registered" });
-    } else {
-      console.error("Register error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+    const user = await User.findOne({ email });
 
     if (!user)
       return res.status(400).json({ message: "User not found" });
@@ -90,7 +62,7 @@ app.post("/api/login", async (req, res) => {
     if (!valid)
       return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || "secret", {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret", {
       expiresIn: "1d",
     });
 
@@ -104,7 +76,7 @@ app.post("/api/login", async (req, res) => {
 // --- NOTICE ROUTES ---
 app.get("/api/notices", async (req, res) => {
   try {
-    const notices = await db.all("SELECT * FROM notices ORDER BY id DESC");
+    const notices = await Notice.find().sort({ _id: -1 });
     res.json(notices);
   } catch (err) {
     console.error("Get notices error:", err);
@@ -118,11 +90,7 @@ app.post("/api/notices", async (req, res) => {
     if (!title || !message || !date)
       return res.status(400).json({ message: "All fields required" });
 
-    await db.run(
-      "INSERT INTO notices (title, message, date, userId) VALUES (?, ?, ?, ?)",
-      [title, message, date, userId || null]
-    );
-
+    await Notice.create({ title, message, date, userId });
     res.json({ message: "✅ Notice added" });
   } catch (err) {
     console.error("Add notice error:", err);
