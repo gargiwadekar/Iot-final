@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -14,37 +13,30 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- SQLite Database Setup ----------
-let db;
-async function initDB() {
-  db = await open({
-    filename: "./database.db",
-    driver: sqlite3.Database,
-  });
+const db = new Database(path.join(__dirname, "database.db"));
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS notices (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT,
-      message TEXT,
-      date TEXT
-    )
-  `);
-  console.log("✅ Database connected and table ready.");
-}
-initDB();
+// Create table if it doesn't exist
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    message TEXT,
+    date TEXT
+  )
+`).run();
+
+console.log("✅ Database connected and table ready.");
 
 // ---------- API Routes ----------
-app.get("/api/notices", async (req, res) => {
-  const notices = await db.all("SELECT * FROM notices ORDER BY id DESC");
+app.get("/api/notices", (req, res) => {
+  const notices = db.prepare("SELECT * FROM notices ORDER BY id DESC").all();
   res.json(notices);
 });
 
-app.post("/api/notices", async (req, res) => {
+app.post("/api/notices", (req, res) => {
   const { title, message, date } = req.body;
-  await db.run(
-    "INSERT INTO notices (title, message, date) VALUES (?, ?, ?)",
-    [title, message, date]
-  );
+  db.prepare("INSERT INTO notices (title, message, date) VALUES (?, ?, ?)")
+    .run(title, message, date);
   res.json({ message: "✅ Notice added successfully" });
 });
 
@@ -59,7 +51,4 @@ app.get("*", (req, res) => {
 
 // ---------- Start Server ----------
 const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
